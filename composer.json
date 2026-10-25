@@ -1,0 +1,31 @@
+{
+  "name": "ipscope/ipscope-php",
+  "description": "Official zero-dependency, memory-safe PHP 8.2+ Server-Side SDK for the IPScope IP Intelligence Platform (hardened against CVE-2026-109618 / CVE-2026-109619).",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "ip",
+    "geolocation",
+    "asn",
+    "vpn-detection",
+    "ip-intelligence",
+    "ipscope"
+  ],
+  "require": {
+    "php": ">=8.2.0",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "IpScope\\Sdk\\": "src/"
+    },
+    "files": [
+      "src/Exceptions.php",
+      "src/Models.php"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
