@@ -1,0 +1,39 @@
+name: Release & Packagist Sync
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Validate & Sync Packagist
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: curl, json
+
+      - name: Validate composer.json & Run Tests
+        run: |
+          composer validate --strict
+          php tests/test_sdk_php.php
+
+      - name: Trigger Packagist Webhook (when PACKAGIST_TOKEN is set)
+        if: env.PACKAGIST_TOKEN != '' && env.PACKAGIST_USERNAME != ''
+        env:
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          curl -fsSL -X POST \
+            -H "Content-Type: application/json" \
+            -d '{"repository":{"url":"https://github.com/ipscope-io/ipscope-php"}}' \
+            "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}"

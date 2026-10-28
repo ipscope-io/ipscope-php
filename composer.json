@@ -3,6 +3,11 @@
   "description": "Official zero-dependency, memory-safe PHP 8.2+ Server-Side SDK for the IPScope IP Intelligence Platform (hardened against CVE-2026-109618 / CVE-2026-109619).",
   "type": "library",
   "license": "MIT",
+  "homepage": "https://ipscope.io/docs/sdks/php",
+  "support": {
+    "source": "https://github.com/ipscope-io/ipscope-php",
+    "issues": "https://github.com/ipscope-io/ipscope-php/issues"
+  },
   "keywords": [
     "ip",
     "geolocation",
