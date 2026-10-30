@@ -51,7 +51,7 @@ if (!$advisory['patched']) {
     error_log($advisory['recommendation']);
 }
 
-$client = new IpScopeClient(apiKey: 'ips_live_your_api_key_here');
+$client = new IpScopeClient(apiKey: '<public>:<private>');
 
 // 1. Single IPv4 or IPv6 lookup (cached automatically in bounded LRU cache)
 $ipInfo = $client->lookupIp('8.8.8.8');

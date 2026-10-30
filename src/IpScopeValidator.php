@@ -18,7 +18,7 @@ final class IpScopeValidator
         $trimmed = trim($apiKey);
         if ($trimmed === '' || strlen($trimmed) < 8) {
             throw new IpScopeValidationException(
-                'A valid IPScope API key ("ips_live_..." or "ips_test_...") is required.',
+                'A valid IPScope API key ("<public>:<private>") is required.',
                 'apiKey'
             );
         }
