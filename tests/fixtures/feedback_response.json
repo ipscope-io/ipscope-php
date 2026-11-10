@@ -1,0 +1,11 @@
+{
+  "prefix_or_ip": "8.8.8.0/24",
+  "role": "network_owner",
+  "issue_type": "wrong_city",
+  "requested_correction": {"city": "Mountain View", "country_code": "US"},
+  "evidence_url": "https://example.net/geofeed.csv",
+  "contact_consent": false,
+  "id": "fb_3f9a2c71-b4e",
+  "createdAt": "2026-11-10T09:15:42.118Z",
+  "status": "pending_review"
+}

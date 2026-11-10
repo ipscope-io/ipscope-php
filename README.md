@@ -42,6 +42,7 @@ require_once '/path/to/sdks/php/autoload.php';
 
 declare(strict_types=1);
 
+use IpScope\Sdk\FeedbackSubmissionInput;
 use IpScope\Sdk\IpScopeClient;
 use IpScope\Sdk\IpScopeSecurity;
 
@@ -51,27 +52,59 @@ if (!$advisory['patched']) {
     error_log($advisory['recommendation']);
 }
 
+// API keys have the form "<public>:<private>" (a UUID, a colon, then a 43-character secret).
 $client = new IpScopeClient(apiKey: '<public>:<private>');
 
-// 1. Single IPv4 or IPv6 lookup (cached automatically in bounded LRU cache)
+// 1. Single IPv4 or IPv6 lookup (GET /v1/ip/{ip}; cached in a bounded LRU cache)
 $ipInfo = $client->lookupIp('8.8.8.8');
-echo $ipInfo->ip . ' ' . $ipInfo->geo->countryCode . ' AS' . $ipInfo->network->asn . PHP_EOL;
-echo 'VPN: ' . ($ipInfo->security->isVpn ? 'true' : 'false') . ' Threat: ' . $ipInfo->security->threatLevel . PHP_EOL;
+echo $ipInfo->ip . ' IPv' . $ipInfo->ipVersion . ' ' . $ipInfo->geo->countryCode
+    . ' AS' . $ipInfo->network->asn . ' ' . $ipInfo->network->organization . PHP_EOL;
+// Security booleans are true, false, or null (null = not enough evidence).
+echo 'VPN: ' . var_export($ipInfo->security->isVpn, true)
+    . ' Hosting: ' . var_export($ipInfo->security->isHosting, true)
+    . ' Tor exit: ' . var_export($ipInfo->security->isTorExit, true)
+    . ' Anonymizer: ' . $ipInfo->security->anonymizerType . PHP_EOL;
+// `connection` and `securityExtensions` are null unless your plan licenses them.
+echo 'Connection: ' . ($ipInfo->connection?->connectionType ?? 'n/a')
+    . ' Dataset: ' . $ipInfo->datasetVersion . PHP_EOL;
 
-// 2. Batch lookup (up to 100 IPs; deduplicates & reuses cached entries automatically)
+// 2. Your own public IP (GET /v1/ip/me)
+$me = $client->lookupCallerIp();
+
+// 3. Batch lookup (up to 100 IPs; deduplicates & reuses cached entries automatically)
 $batch = $client->lookupBatch(['8.8.8.8', '1.1.1.1', '2606:4700:4700::1111']);
 foreach ($batch->results as $record) {
-    echo $record->ip . ' -> ' . $record->network->org . PHP_EOL;
+    echo $record->ip . ' -> ' . $record->network->organization . PHP_EOL;
 }
 
-// 3. Memory-bounded streaming batch lookup for 10,000+ IPs (constant O(chunk) RAM)
+// 4. Memory-bounded streaming batch lookup for 10,000+ IPs (constant O(chunk) RAM)
 foreach ($client->lookupBatchStream($largeIpList) as $chunk) {
     foreach ($chunk->results as $record) {
         // Process each record with < 400 KB steady-state memory overhead
     }
 }
 
-// 4. Network CIDR prefix lookup
+// 5. Network CIDR prefix lookup (GET /v1/networks/{address}/{length})
 $prefix = $client->lookupNetwork('8.8.8.0/24');
-echo $prefix->requestedCidr . ' matches: ' . $prefix->totalMatches . PHP_EOL;
+echo $prefix->queriedCidr . ' matched ' . $prefix->matchedNetwork
+    . ' org: ' . ($prefix->record?->organization ?? 'n/a') . PHP_EOL;
+
+// 6. Rate limits (per user): seconds until the window resets
+$limits = $client->getLastRateLimit();
+echo $limits?->remaining . '/' . $limits?->limit . ', resets in ' . $limits?->resetAfterSeconds . 's' . PHP_EOL;
+
+// 7. Report a wrong answer (POST /v1/feedback)
+$client->submitFeedback(new FeedbackSubmissionInput(
+    prefixOrIp: '8.8.8.0/24',
+    role: 'network_owner',          // network_owner | user | researcher
+    issueType: 'wrong_city',        // see FeedbackSubmissionInput::ISSUE_TYPES
+    requestedCorrection: ['city' => 'Mountain View'],
+    evidenceUrl: 'https://example.net/geofeed.csv',
+));
+
+// 8. Service health and dataset versions
+echo $client->getStatus()->currentVersion() . PHP_EOL;
+echo $client->getDatasetsMetadata()->activeVersion . PHP_EOL;
 ```
+
+Upgrading from 1.0? See [CHANGELOG.md](CHANGELOG.md).

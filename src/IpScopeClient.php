@@ -19,6 +19,7 @@ use Generator;
  */
 final class IpScopeClient
 {
+    public const VERSION = HttpTransport::SDK_VERSION;
     public const MAX_BATCH_SIZE = IpScopeValidator::MAX_BATCH_SIZE;
     public const MAX_RESPONSE_BYTES = HttpTransport::MAX_RESPONSE_BYTES;
 
@@ -112,11 +113,11 @@ final class IpScopeClient
     }
 
     /**
-     * Resolves IP intelligence for the caller's own public IP address (`GET /v1/ip`).
+     * Resolves IP intelligence for the caller's own public IP address (`GET /v1/ip/me`).
      */
     public function lookupCallerIp(?RequestOptions $options = null): IpLookupResponse
     {
-        $raw = $this->transport->requestJson('GET', '/v1/ip', null, $options);
+        $raw = $this->transport->requestJson('GET', '/v1/ip/me', null, $options);
         $record = IpLookupResponse::fromArray($raw['data']);
         if (!($options?->bypassCache ?? false) && $record->ip !== '') {
             $this->cache->set($record->ip, $record);
@@ -139,6 +140,7 @@ final class IpScopeClient
         /** @var array<string, IpLookupResponse> $resolvedMap */
         $resolvedMap = [];
         $missingIps = [];
+        $datasetVersion = '';
 
         if (!$bypassCache && $this->cache->isEnabled()) {
             foreach ($uniqueIps as $ip) {
@@ -161,6 +163,7 @@ final class IpScopeClient
                 $options
             );
             $batchResp = BatchLookupResponse::fromArray($raw['data']);
+            $datasetVersion = $batchResp->datasetVersion;
 
             foreach ($batchResp->results as $idx => $record) {
                 $requestedKey = $missingIps[$idx] ?? $record->ip;
@@ -187,7 +190,21 @@ final class IpScopeClient
         return new BatchLookupResponse(
             count: count($orderedResults),
             results: $orderedResults,
+            datasetVersion: $datasetVersion !== '' ? $datasetVersion : self::firstDatasetVersion($orderedResults),
         );
+    }
+
+    /**
+     * @param list<IpLookupResponse> $records
+     */
+    private static function firstDatasetVersion(array $records): string
+    {
+        foreach ($records as $record) {
+            if ($record->datasetVersion !== '') {
+                return $record->datasetVersion;
+            }
+        }
+        return '';
     }
 
     /**
@@ -207,6 +224,7 @@ final class IpScopeClient
         return new BatchLookupResponse(
             count: count($merged),
             results: $merged,
+            datasetVersion: self::firstDatasetVersion($merged),
         );
     }
 
@@ -254,13 +272,13 @@ final class IpScopeClient
     }
 
     /**
-     * Looks up BGP/CIDR network prefix intelligence (`GET /v1/network/{address}/{prefixLength}`).
+     * Looks up BGP/CIDR network prefix intelligence (`GET /v1/networks/{address}/{prefixLength}`).
      */
     public function lookupNetwork(string $cidr, ?RequestOptions $options = null): NetworkPrefixLookupResponse
     {
         $parsed = IpScopeValidator::validateCidrPrefix($cidr);
         $path = sprintf(
-            '/v1/network/%s/%d',
+            '/v1/networks/%s/%d',
             rawurlencode($parsed['address']),
             $parsed['prefixLength']
         );
@@ -269,11 +287,11 @@ final class IpScopeClient
     }
 
     /**
-     * Retrieves active IP intelligence dataset snapshots metadata (`GET /v1/datasets/metadata`).
+     * Retrieves active and historical dataset snapshot metadata (`GET /v1/metadata/datasets`).
      */
     public function getDatasetsMetadata(?RequestOptions $options = null): DatasetsMetadataResponse
     {
-        $raw = $this->transport->requestJson('GET', '/v1/datasets/metadata', null, $options);
+        $raw = $this->transport->requestJson('GET', '/v1/metadata/datasets', null, $options);
         return DatasetsMetadataResponse::fromArray($raw['data']);
     }
 
@@ -284,18 +302,36 @@ final class IpScopeClient
         FeedbackSubmissionInput $feedback,
         ?RequestOptions $options = null
     ): FeedbackSubmissionResponse {
-        $trimmed = trim($feedback->ipOrCidr);
+        $trimmed = trim($feedback->prefixOrIp);
         if ($trimmed === '') {
-            throw new IpScopeValidationException('ipOrCidr must not be empty.', 'ipOrCidr');
+            throw new IpScopeValidationException('prefixOrIp must not be empty.', 'prefixOrIp');
         }
         if (str_contains($trimmed, '/')) {
             $normalized = IpScopeValidator::validateCidrPrefix($trimmed)['canonicalCidr'];
         } else {
-            $normalized = IpScopeValidator::validateIpAddress($trimmed, 'ipOrCidr');
+            $normalized = IpScopeValidator::validateIpAddress($trimmed, 'prefixOrIp');
+        }
+        if (!in_array($feedback->role, FeedbackSubmissionInput::ROLES, true)) {
+            throw new IpScopeValidationException(
+                sprintf('role must be one of: %s.', implode(', ', FeedbackSubmissionInput::ROLES)),
+                'role'
+            );
+        }
+        if (!in_array($feedback->issueType, FeedbackSubmissionInput::ISSUE_TYPES, true)) {
+            throw new IpScopeValidationException(
+                sprintf('issueType must be one of: %s.', implode(', ', FeedbackSubmissionInput::ISSUE_TYPES)),
+                'issueType'
+            );
+        }
+        if ($feedback->evidenceUrl !== null && filter_var($feedback->evidenceUrl, FILTER_VALIDATE_URL) === false) {
+            throw new IpScopeValidationException('evidenceUrl must be an absolute URL.', 'evidenceUrl');
+        }
+        if ($feedback->contactEmail !== null && filter_var($feedback->contactEmail, FILTER_VALIDATE_EMAIL) === false) {
+            throw new IpScopeValidationException('contactEmail must be a valid email address.', 'contactEmail');
         }
 
         $payload = $feedback->toArray();
-        $payload['ip_or_cidr'] = $normalized;
+        $payload['prefix_or_ip'] = $normalized;
 
         $raw = $this->transport->requestJson('POST', '/v1/feedback', $payload, $options);
         return FeedbackSubmissionResponse::fromArray($raw['data']);
@@ -311,7 +347,7 @@ final class IpScopeClient
     }
 
     /**
-     * Returns the most recent rate-limit metadata observed from `x-ratelimit-*` headers.
+     * Returns the most recent rate-limit metadata observed from `X-RateLimit-*` headers.
      */
     public function getLastRateLimit(): ?RateLimitMetadata
     {

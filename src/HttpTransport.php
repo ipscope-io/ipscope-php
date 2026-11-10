@@ -15,7 +15,8 @@ use JsonException;
  */
 final class HttpTransport
 {
-    public const SDK_VERSION = '0.1.0';
+    /** Single source of the SDK version (User-Agent, `IpScopeClient::VERSION`). */
+    public const SDK_VERSION = '1.1.0';
     public const DEFAULT_BASE_URL = 'https://api.ipscope.io';
     public const DEFAULT_TIMEOUT_SECONDS = 5.0;
     public const MAX_RESPONSE_BYTES = 2 * 1024 * 1024; // 2 MiB hard ceiling
@@ -342,22 +343,21 @@ final class HttpTransport
     {
         $limit = self::parseHeaderInt($headers['x-ratelimit-limit'] ?? null);
         $remaining = self::parseHeaderInt($headers['x-ratelimit-remaining'] ?? null);
-        $reset = self::parseHeaderInt($headers['x-ratelimit-reset'] ?? null);
-        $credits = self::parseHeaderInt($headers['x-ratelimit-credits-remaining'] ?? null);
-        $tier = isset($headers['x-ratelimit-tier']) && trim($headers['x-ratelimit-tier']) !== ''
-            ? trim($headers['x-ratelimit-tier'])
+        // `X-RateLimit-Reset` is the number of seconds until the window resets.
+        $resetAfter = self::parseHeaderInt($headers['x-ratelimit-reset'] ?? null);
+        $scope = isset($headers['x-ratelimit-scope']) && trim($headers['x-ratelimit-scope']) !== ''
+            ? trim($headers['x-ratelimit-scope'])
             : null;
 
-        if ($limit === null && $remaining === null && $reset === null && $credits === null && $tier === null) {
+        if ($limit === null && $remaining === null && $resetAfter === null && $scope === null) {
             return null;
         }
 
         return new RateLimitMetadata(
             limit: $limit,
             remaining: $remaining,
-            resetEpochSeconds: $reset,
-            creditsRemaining: $credits,
-            planTier: $tier,
+            resetAfterSeconds: $resetAfter,
+            scope: $scope,
         );
     }
 

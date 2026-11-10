@@ -1,0 +1,22 @@
+{
+  "active_version": "2026-11-10",
+  "previous_version": "2026-11-09",
+  "snapshots": [
+    {
+      "snapshot_version": "2026-11-10",
+      "digest": "9f2c1e7b4a0d5c3e8b6f1a2d4c7e9b0a3f5d8c1e2b4a6d9f0c3e5b7a1d2f4c6e",
+      "ruleset_version": "ruleset-2026.11.1",
+      "published_at": "2026-11-10T02:00:00.000Z",
+      "ipv4_prefix_count": 1043211,
+      "ipv6_prefix_count": 318406
+    },
+    {
+      "snapshot_version": "2026-11-09",
+      "digest": "1b3d5f7a9c0e2b4d6f8a1c3e5b7d9f0a2c4e6b8d0f1a3c5e7b9d2f4a6c8e0b1d",
+      "ruleset_version": "ruleset-2026.11.1",
+      "published_at": "2026-11-09T02:00:00.000Z",
+      "ipv4_prefix_count": 1042977,
+      "ipv6_prefix_count": 318122
+    }
+  ]
+}

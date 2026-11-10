@@ -1,0 +1,52 @@
+{
+  "queried_cidr": "1.1.1.0/24",
+  "matched_network": "1.1.1.0/24",
+  "family": 4,
+  "bgp_prefix_length": 24,
+  "dataset_version": "2026-11-10",
+  "record": {
+    "family": 4,
+    "prefix": "1.1.1.0/24",
+    "asn": 13335,
+    "organization": "CLOUDFLARENET - Cloudflare, Inc.",
+    "locations": {
+      "declaredLocation": {
+        "countryCode": "AU",
+        "countryName": "Australia",
+        "subdivision": "New South Wales",
+        "city": "Sydney",
+        "latitude": -33.8688,
+        "longitude": 151.209,
+        "accuracyRadiusKm": 300,
+        "timezone": "Australia/Sydney"
+      },
+      "inferredPhysicalLocation": null,
+      "clientLocation": null
+    },
+    "countryCode": "AU",
+    "subdivision": "New South Wales",
+    "city": "Sydney",
+    "postalCode": null,
+    "latitude": -33.8688,
+    "longitude": 151.209,
+    "timezone": "Australia/Sydney",
+    "locationType": "declared",
+    "geoConfidence": 0.85,
+    "accuracyRadiusKm": 300,
+    "isVirtualLocation": null,
+    "connectionType": "hosting",
+    "isHosting": true,
+    "isVpn": false,
+    "isTorExit": false,
+    "isProxy": false,
+    "anonymizerType": "none",
+    "securityConfidence": 0.85,
+    "abuseVelocityScore": 14,
+    "isKnownScanner": false,
+    "reasonCodes": ["BGP_ORIGIN_ASN_MATCHED", "KNOWN_HOSTING_INFRASTRUCTURE_RANGE", "RDAP_REGISTRATION_COUNTRY_FALLBACK"],
+    "sourceIds": ["rir-rdap-registrations", "rfc8805-public-geofeed"],
+    "licensePolicyIds": ["policy-routing-rdap-permitted", "policy-rfc8805-public"],
+    "updatedAt": "2026-11-04T21:07:15.284Z"
+  },
+  "lookup": {"ip":"1.1.1.0","ip_version":4,"matched_network":"1.1.1.0/24","geo":{"country_code":"AU","city":"Sydney","location_type":"declared","confidence":0.85,"accuracy_radius_km":300,"declared_country_code":"AU","physical_country_code":null,"is_virtual_location":null,"subdivision":"New South Wales","timezone":"Australia/Sydney","latitude":-33.8688,"longitude":151.209},"network":{"asn":13335,"organization":"CLOUDFLARENET - Cloudflare, Inc."},"security":{"is_vpn":false,"is_hosting":true,"is_tor_exit":false,"is_proxy":false,"is_relay":false,"anonymizer_type":"none","confidence":0.85,"reason_codes":["BGP_ORIGIN_ASN_MATCHED","KNOWN_HOSTING_INFRASTRUCTURE_RANGE","RDAP_REGISTRATION_COUNTRY_FALLBACK"]},"connection":{"connection_type":"hosting","is_residential":false,"is_mobile":false,"is_business":false,"is_hosting":true},"security_extensions":{"abuse_velocity_score":14,"is_known_scanner":false,"observation_recency_hours":0},"dataset_version":"2026-11-10","updated_at":"2026-11-04T21:07:15.284Z"}
+}
